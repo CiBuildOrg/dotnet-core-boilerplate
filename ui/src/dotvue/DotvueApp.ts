@@ -44,22 +44,26 @@ export default class DotvueApp {
                 let ssrData = this.ssrData
                 
                 matchedComponents.map(Component => {
-                    
-                    if ((Component as any).options.loadDataAsync && (Component as any).options.loadDataAsync instanceof Promise) {
+                    let loadDataAsyncFunction = (Component as any).options.methods.loadDataAsync
+                    if (loadDataAsyncFunction) {
                         promises.push((async (key: string) => {
-                            let loadDataAsyncFunction = (Component as any).options.loadDataAsync
                             if (ssrData[key]){
                                 initialData.set(key, ssrData[key])
                                 delete ssrData[key]
                             } else {
-                                initialData.set(key, await loadDataAsyncFunction(router.currentRoute))
+                                let data = await loadDataAsyncFunction(router.currentRoute)
+                                initialData.set(key, data)
+                                ssrData[key] = data
                             }
-                            (Component as any).options.loadDataAsync = (to:Route) => {
+                            (Component as any).options.methods.loadDataAsync = (to:Route) => {
+                                console.log("overridden")
                                 if (initialData.has(key)){
                                     let data = initialData.get(key)
                                     initialData.delete(key)
+                                    console.log("from SSR")
                                     return data
                                 }
+                                console.log("from Source")
                                 return loadDataAsyncFunction(to);
                             }
                         })(String(i)))
@@ -69,7 +73,7 @@ export default class DotvueApp {
 
                 Promise.all<void>(promises)
                     .then(resolve)
-                    .catch(reject);
+                    .catch(reject)
 
             }, reject)
         })

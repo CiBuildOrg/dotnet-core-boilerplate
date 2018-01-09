@@ -11,7 +11,7 @@ import 'font-awesome/css/font-awesome.css'
 // app css
 import '../styles/main.css'
 
-// Register the router hooks with thier names for components
+// Register the router hooks with their names for components
 Component.registerHooks([
     'beforeRouteEnter',
     'beforeRouteUpdate',
@@ -34,7 +34,7 @@ export default function newApp(initialPath?: string): DotvueApp {
                     } else {
                         resolve({ x: 0, y: 0 })
                     }
-                }, 200)
+                }, 150)
             })
         }
     })

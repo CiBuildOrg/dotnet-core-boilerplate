@@ -15,15 +15,22 @@ export class List extends Vue {
 
     public posts = new Array<Post>();
 
-    public async loadDataAsync(to: Route) {
+    public static async loadDataAsyncStatic(to: Route) {
         return await PostRepository.all()
     }
-
-    private async routeChangeAsync(to: Route, from: Route, next: any) {
-        this.posts = Post.convertAll(await this.loadDataAsync(to))
-        next(true)
+    public loadDataAsync(to: Route){
+        return List.loadDataAsyncStatic(to);
     }
-    public beforeRouteEnter = this.routeChangeAsync;
+
+    public static data: Post[]
+    public async beforeRouteEnter(to: Route, from: Route, next: any){
+        List.data = Post.convertAll(await List.loadDataAsyncStatic(to))
+        next()
+    }
+    
+    public created(){
+        this.posts = List.data
+    }
 }
 
 @DotvueComponent(module, {
@@ -31,16 +38,27 @@ export class List extends Vue {
 })
 export class View extends Vue {
 
-    public post = new Post();
+    public post: Post
 
-    public async loadDataAsync(to: Route) {
+    public static async loadDataAsyncStatic(to: Route) {
         return await PostRepository.one(Number(to.params.id))
     }
-
-    private async routeChangeAsync(to: Route, from: Route, next: any) {
-        this.post = new Post(await this.loadDataAsync(to))
-        next(true)
+    public loadDataAsync(to: Route){
+        return View.loadDataAsyncStatic(to);
     }
-    public beforeRouteEnter = this.routeChangeAsync;
-    public beforeRouteUpdate = this.routeChangeAsync;
+
+    public static data: Post
+    public async beforeRouteEnter(to: Route, from: Route, next: any){
+        View.data = new Post(await View.loadDataAsyncStatic(to))
+        next()
+    }
+
+    public async beforeRouteUpdate(to: Route, from: Route, next: any){
+        this.post = new Post(await View.loadDataAsyncStatic(to))
+        next()
+    }
+
+    public created() {
+        this.post = View.data
+    }
 }

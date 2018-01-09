@@ -8,24 +8,30 @@ import Author from '../models/Author'
 import AuthorsRepository from '../repositories/AuthorsRepository'
 import PostList from '../components/post-list/PostList'
 
-const dataKeyList = "authors/list"
-
 @DotvueComponent(module, {
     template: ListTemplate
 })
 export class List extends Vue {
 
-    public authors = new Array<Author>();
+    public authors: Author[]
 
-    public async loadDataAsync(to: Route) {
+    public static async loadDataAsyncStatic(to: Route) {
         return await AuthorsRepository.all()
     }
-
-    private async routeChangeAsync(to: Route, from: Route, next: any) {
-        this.authors = Author.convertAll(await this.loadDataAsync(to))
-        next(true)
+    public loadDataAsync(to: Route){
+        return List.loadDataAsyncStatic(to);
     }
-    public beforeRouteEnter = this.routeChangeAsync;
+
+    public static data: Author[]
+    public async beforeRouteEnter(to: Route, from: Route, next: any){
+        List.data = Author.convertAll(await List.loadDataAsyncStatic(to))
+        next()
+    }
+
+    public created() {
+        this.authors = List.data
+    }
+
 }
 
 @DotvueComponent(module, {
@@ -34,17 +40,28 @@ export class List extends Vue {
 })
 export class View extends Vue {
 
-    public author = new Author();
+    public author: Author
 
-    public async loadDataAsync(to: Route) {
+    public static async loadDataAsyncStatic(to: Route) {
         return await AuthorsRepository.one(Number(to.params.id))
     }
-
-    private async routeChangeAsync(to: Route, from: Route, next: any) {
-        this.author = new Author(await this.loadDataAsync(to))
-        next(true)
+    public loadDataAsync(to: Route){
+        return View.loadDataAsyncStatic(to);
     }
-    public beforeRouteEnter = this.routeChangeAsync;
-    public beforeRouteUpdate = this.routeChangeAsync;
+
+    public static data: Author
+    public async beforeRouteEnter(to: Route, from: Route, next: any){
+        View.data = new Author(await View.loadDataAsyncStatic(to))
+        next()
+    }
+
+    public async beforeRouteUpdate(to: Route, from: Route, next: any){
+        this.author = new Author(await View.loadDataAsyncStatic(to))
+        next()
+    }
+
+    public created() {
+        this.author = View.data
+    }
 
 }
